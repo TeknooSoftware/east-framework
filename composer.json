@@ -30,6 +30,7 @@
         "sebastian/phpcpd": "~4.1",
         "phploc/phploc": "~5.0",
         "behat/behat": "~3.5",
+        "symfony/config": "~3.4||~4.3",
         "symfony/routing": "~3.4||~4.3",
         "symfony/console": "~3.4||~4.3",
         "symfony/yaml": "~3.4||~4.3",
