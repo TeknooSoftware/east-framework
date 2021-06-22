@@ -24,7 +24,8 @@ namespace Teknoo\Tests\East\FoundationBundle\Resources;
 
 use DI\Container;
 use Psr\Log\LoggerInterface;
-use Teknoo\East\Foundation\Http\ClientInterface;
+use Teknoo\East\Foundation\Client\ClientInterface as BaseClient;
+use Teknoo\East\Foundation\Http\ClientInterface as HttpClient;
 use Teknoo\East\Foundation\Manager\Manager;
 use Teknoo\East\Foundation\Manager\ManagerInterface;
 use Teknoo\East\Foundation\Processor\Processor;
@@ -103,8 +104,9 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
         $container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
         $manager = $this->createMock(ManagerInterface::class);
         $container->set(ManagerInterface::class, $manager);
-        $client1 = $container->get(ClientInterface::class);
-        $client2 = $container->get(Client::class);
+        $client1 = $container->get(BaseClient::class);
+        $client2 = $container->get(HttpClient::class);
+        $client3 = $container->get(Client::class);
 
         self::assertInstanceOf(
             Client::class,
@@ -116,7 +118,13 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
             $client2
         );
 
-        self::assertSame($client1, $client2);
+        self::assertInstanceOf(
+            Client::class,
+            $client3
+        );
+
+        self::assertSame($client1, $client3);
+        self::assertSame($client2, $client3);
     }
 
     public function testCreateSessionMiddleware()

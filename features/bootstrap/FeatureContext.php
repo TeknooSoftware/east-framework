@@ -13,7 +13,8 @@ use Teknoo\East\Foundation\EndPoint\RecipeEndPoint;
 use Teknoo\East\Foundation\Recipe\CookbookInterface;
 use Teknoo\East\Foundation\Recipe\Recipe;
 use Teknoo\East\Foundation\Router\RouterInterface;
-use Teknoo\East\Foundation\Http\ClientInterface;
+use Teknoo\East\Foundation\Client\ClientInterface;
+use Teknoo\East\Foundation\Client\ResponseInterface as EastResponse;
 use Teknoo\East\Foundation\Manager\ManagerInterface;
 use Teknoo\East\Foundation\Manager\Manager;
 use Teknoo\East\Foundation\Router\ResultInterface;
@@ -198,15 +199,17 @@ class FeatureContext implements Context
                 return $this;
             }
 
-            public function acceptResponse(MessageInterface $response): ClientInterface
+            public function acceptResponse(EastResponse | MessageInterface | null $response): ClientInterface
             {
                 $this->context->response = $response;
 
                 return $this;
             }
 
-            public function sendResponse(MessageInterface $response = null, bool $silently = false): ClientInterface
-            {
+            public function sendResponse(
+                EastResponse | MessageInterface | null $response = null,
+                bool $silently = false
+            ): ClientInterface {
                 $silently = $silently || $this->inSilentlyMode;
 
                 if (!empty($response)) {

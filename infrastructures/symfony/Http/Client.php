@@ -31,11 +31,12 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Teknoo\East\Foundation\Http\ClientInterface;
+use Teknoo\East\Foundation\Client\ResponseInterface as EastResponse;
+use Teknoo\East\Foundation\Client\ClientInterface;
 use Throwable;
 
 /**
- * Default implementation of Teknoo\East\Foundation\Http\ClientInterface and
+ * Default implementation of Teknoo\East\Foundation\Client\ClientInterface and
  * Teknoo\East\FoundationBundle\Http\ClientWithResponseEventInterface to create client integrated with Symfony and able
  * to manage RequestEvent instance from Symfony Kernel loop.
  *
@@ -49,7 +50,7 @@ use Throwable;
  */
 class Client implements ClientWithResponseEventInterface
 {
-    private ?MessageInterface $response = null;
+    private EastResponse | MessageInterface | null $response = null;
 
     private bool $inSilentlyMode = false;
 
@@ -77,22 +78,24 @@ class Client implements ClientWithResponseEventInterface
         return $this;
     }
 
-    public function acceptResponse(MessageInterface $response): ClientInterface
+    public function acceptResponse(EastResponse | MessageInterface $response): ClientInterface
     {
         $this->response = $response;
 
         return $this;
     }
 
-    public function sendResponse(MessageInterface $response = null, bool $silently = false): ClientInterface
-    {
+    public function sendResponse(
+        EastResponse | MessageInterface | null $response = null,
+        bool $silently = false
+    ): ClientInterface {
         $silently = $silently || $this->inSilentlyMode;
 
-        if ($response instanceof MessageInterface) {
+        if (null !== $response) {
             $this->acceptResponse($response);
         }
 
-        if (true === $silently && !$this->response instanceof MessageInterface) {
+        if (true === $silently && null === $this->response) {
             return $this;
         }
 
