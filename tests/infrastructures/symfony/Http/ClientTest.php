@@ -23,7 +23,9 @@
 namespace Teknoo\Tests\East\FoundationBundle\Http;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
@@ -55,6 +57,10 @@ class ClientTest extends TestCase
      */
     private $httpFoundationFactory;
 
+    private ?ResponseFactoryInterface $responseFactory = null;
+
+    private ?StreamFactoryInterface $streamFactory = null;
+
     /**
      * @return RequestEvent|\PHPUnit\Framework\MockObject\MockObject
      */
@@ -80,12 +86,38 @@ class ClientTest extends TestCase
     }
 
     /**
+     * @return ResponseFactoryInterface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private function getResponseFactoryMock(): ResponseFactoryInterface
+    {
+        if (!$this->responseFactory instanceof ResponseFactoryInterface) {
+            $this->responseFactory = $this->createMock(ResponseFactoryInterface::class);
+        }
+
+        return $this->responseFactory;
+    }
+
+    /**
+     * @return StreamFactoryInterface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private function getStreamFactoryMock(): StreamFactoryInterface
+    {
+        if (!$this->streamFactory instanceof StreamFactoryInterface) {
+            $this->streamFactory = $this->createMock(StreamFactoryInterface::class);
+        }
+
+        return $this->streamFactory;
+    }
+
+    /**
      * @return Client
      */
     private function buildClient(LoggerInterface $logger = null): Client
     {
         return new Client(
             $this->getHttpFoundationFactoryMock(),
+            $this->getResponseFactoryMock(),
+            $this->getStreamFactoryMock(),
             $this->getRequestEventMock(),
             $logger
         );
@@ -233,7 +265,12 @@ class ClientTest extends TestCase
          */
         $response = $this->createMock(ResponseInterface::class);
 
-        $client = new Client($this->getHttpFoundationFactoryMock());
+        $client = new Client(
+            $this->getHttpFoundationFactoryMock(),
+            $this->getResponseFactoryMock(),
+            $this->getStreamFactoryMock()
+        );
+
         self::assertInstanceOf(
             $this->getClientClass(),
             $client->sendResponse($response)
@@ -347,7 +384,11 @@ class ClientTest extends TestCase
          */
         $response = $this->createMock(ResponseInterface::class);
 
-        $client = new Client($this->getHttpFoundationFactoryMock());
+        $client = new Client(
+            $this->getHttpFoundationFactoryMock(),
+            $this->getResponseFactoryMock(),
+            $this->getStreamFactoryMock()
+        );
         self::assertInstanceOf(
             $this->getClientClass(),
             $client->sendResponse($response, true)
@@ -415,7 +456,11 @@ class ClientTest extends TestCase
     public function testErrorInRequestWithoutRequestEvent()
     {
         $this->expectException(\Exception::class);
-        $client = new Client($this->getHttpFoundationFactoryMock());
+        $client = new Client(
+            $this->getHttpFoundationFactoryMock(),
+            $this->getResponseFactoryMock(),
+            $this->getStreamFactoryMock()
+        );
         self::assertInstanceOf(
             $this->getClientClass(),
             $client->errorInRequest(new \Exception('fooBar'))

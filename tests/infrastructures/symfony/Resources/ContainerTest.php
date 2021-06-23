@@ -23,6 +23,8 @@
 namespace Teknoo\Tests\East\FoundationBundle\Resources;
 
 use DI\Container;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Teknoo\East\Foundation\Client\ClientInterface as BaseClient;
 use Teknoo\East\Foundation\Http\ClientInterface as HttpClient;
@@ -102,6 +104,8 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
     {
         $container = $this->buildContainer();
         $container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
+        $container->set(ResponseFactoryInterface::class, $this->createMock(ResponseFactoryInterface::class));
+        $container->set(StreamFactoryInterface::class, $this->createMock(StreamFactoryInterface::class));
         $manager = $this->createMock(ManagerInterface::class);
         $container->set(ManagerInterface::class, $manager);
         $client1 = $container->get(BaseClient::class);

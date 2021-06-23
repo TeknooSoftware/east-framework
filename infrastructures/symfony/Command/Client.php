@@ -33,6 +33,8 @@ use Teknoo\East\Foundation\Client\ClientInterface;
 use Teknoo\East\Foundation\Client\ResponseInterface;
 use Throwable;
 
+use function json_encode;
+
 /**
  * Default implementation of Teknoo\East\Foundation\Http\ClientInterface to Symfony Command to use East foundation
  * in CLI.
@@ -117,7 +119,7 @@ class Client implements ClientInterface
         if ($this->response instanceof MessageInterface) {
             $this->output->writeln((string) $this->response->getBody());
         } else {
-            $this->output->writeln((string) \json_encode($this->response));
+            $this->output->writeln((string) json_encode($this->response));
         }
 
         $this->response = null;

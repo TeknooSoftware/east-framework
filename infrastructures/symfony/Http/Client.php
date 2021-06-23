@@ -26,7 +26,9 @@ declare(strict_types=1);
 namespace Teknoo\East\FoundationBundle\Http;
 
 use Psr\Http\Message\MessageInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
@@ -34,6 +36,8 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Teknoo\East\Foundation\Client\ResponseInterface as EastResponse;
 use Teknoo\East\Foundation\Client\ClientInterface;
 use Throwable;
+
+use function json_encode;
 
 /**
  * Default implementation of Teknoo\East\Foundation\Client\ClientInterface and
@@ -56,6 +60,8 @@ class Client implements ClientWithResponseEventInterface
 
     public function __construct(
         private HttpFoundationFactory $factory,
+        private ResponseFactoryInterface $responseFactory,
+        private StreamFactoryInterface $streamFactory,
         private ?RequestEvent $requestEvent = null,
         private ?LoggerInterface $logger = null,
     ) {
@@ -101,6 +107,15 @@ class Client implements ClientWithResponseEventInterface
 
         if (!$this->requestEvent instanceof RequestEvent) {
             throw new RuntimeException('Error, the requestEvent has not been set into the client');
+        }
+
+        if ($this->response instanceof EastResponse) {
+            $psrResponse = $this->responseFactory->createResponse();
+            $this->response = $psrResponse->withBody(
+                $this->streamFactory->createStream(
+                    (string) json_encode($this->response)
+                )
+            );
         }
 
         if (!$this->response instanceof ResponseInterface) {
