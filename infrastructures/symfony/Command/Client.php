@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace Teknoo\East\FoundationBundle\Command;
 
+use JsonSerializable;
 use Psr\Http\Message\MessageInterface;
 use RuntimeException;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
@@ -118,8 +119,10 @@ class Client implements ClientInterface
 
         if ($this->response instanceof MessageInterface) {
             $this->output->writeln((string) $this->response->getBody());
-        } else {
+        } elseif ($this->response instanceof JsonSerializable) {
             $this->output->writeln((string) json_encode($this->response));
+        } else {
+            $this->output->writeln((string) $this->response);
         }
 
         $this->response = null;

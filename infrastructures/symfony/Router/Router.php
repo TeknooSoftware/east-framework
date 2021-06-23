@@ -120,7 +120,7 @@ class Router implements RouterInterface
                     return null;
                 }
 
-                //Method must exist because the controller is callable
+                //Method must exist because the controller is a symfony action callable
                 $method = $reflection->getMethod($explodedController[1]);
                 if (!$method->isStatic()) {
                     return null;

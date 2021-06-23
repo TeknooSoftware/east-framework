@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace Teknoo\East\FoundationBundle\Http;
 
+use JsonSerializable;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -110,11 +111,15 @@ class Client implements ClientWithResponseEventInterface
         }
 
         if ($this->response instanceof EastResponse) {
+            if ($this->response instanceof JsonSerializable) {
+                $content = (string) json_encode($this->response);
+            } else {
+                $content = (string) $this->response;
+            }
+
             $psrResponse = $this->responseFactory->createResponse();
             $this->response = $psrResponse->withBody(
-                $this->streamFactory->createStream(
-                    (string) json_encode($this->response)
-                )
+                $this->streamFactory->createStream($content)
             );
         }
 

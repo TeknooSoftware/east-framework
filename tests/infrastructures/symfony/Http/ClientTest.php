@@ -31,6 +31,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Teknoo\East\Foundation\Client\ClientInterface;
+use Teknoo\East\Foundation\Client\ResponseInterface as EastResponse;
 use Teknoo\East\FoundationBundle\Http\Client;
 
 /**
@@ -92,6 +93,13 @@ class ClientTest extends TestCase
     {
         if (!$this->responseFactory instanceof ResponseFactoryInterface) {
             $this->responseFactory = $this->createMock(ResponseFactoryInterface::class);
+
+            $response = $this->createMock(ResponseInterface::class);
+            $response->expects(self::any())->method('withBody')->willReturnSelf();
+
+            $this->responseFactory->expects(self::any())
+                ->method('createResponse')
+                ->willReturn($response);
         }
 
         return $this->responseFactory;
@@ -148,7 +156,7 @@ class ClientTest extends TestCase
         );
     }
 
-    public function testUpdateResponseWithResponse()
+    public function testUpdateResponseWithPSRResponse()
     {
         /**
          * @var ResponseInterface
@@ -166,13 +174,57 @@ class ClientTest extends TestCase
         );
     }
 
+    public function testUpdateResponseWithEastResponse()
+    {
+        /**
+         * @var ResponseInterface
+         */
+        $response = $this->createMock(EastResponse::class);
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->acceptResponse($response)->updateResponse(
+                function (ClientInterface $client, EastResponse $responsePassed=null) use ($response) {
+                    self::assertEquals($response, $responsePassed);
+                }
+            )
+        );
+    }
+
+    public function testUpdateResponseWithJsonResponse()
+    {
+        $response = new class implements EastResponse, \JsonSerializable
+        {
+            public function __toString(): string
+            {
+                return 'foo';
+            }
+
+            public function jsonSerialize()
+            {
+                return ['foo' => 'bar'];
+            }
+        };
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->acceptResponse($response)->updateResponse(
+                function (ClientInterface $client, EastResponse $responsePassed=null) use ($response) {
+                    self::assertEquals($response, $responsePassed);
+                }
+            )
+        );
+    }
+
     public function testAcceptResponseError()
     {
         $this->expectException(\TypeError::class);
         $this->buildClient()->acceptResponse(new \stdClass());
     }
     
-    public function testAcceptResponse()
+    public function testAcceptPSRResponse()
     {
         /**
          * @var ResponseInterface
@@ -185,8 +237,41 @@ class ClientTest extends TestCase
             $client->acceptResponse($response)
         );
     }
+
+    public function testAcceptEastResponse()
+    {
+        $response = $this->createMock(EastResponse::class);
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->acceptResponse($response)
+        );
+    }
+
+    public function testAcceptJsonResponse()
+    {
+        $response = new class implements EastResponse, \JsonSerializable
+        {
+            public function __toString(): string
+            {
+                return 'foo';
+            }
+
+            public function jsonSerialize()
+            {
+                return ['foo' => 'bar'];
+            }
+        };
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->acceptResponse($response)
+        );
+    }
     
-    public function testSendResponse()
+    public function testSendPSRResponse()
     {
         /**
          * @var ResponseInterface
@@ -207,7 +292,7 @@ class ClientTest extends TestCase
             ->with($this->callback(function ($response) {
                 return $response instanceof ResponseInterface;
             }))
-            ->willReturn($this->createMock(Response::class, [], [], '', false));
+            ->willReturn($this->createMock(Response::class));
 
         $client = $this->buildClient();
         self::assertInstanceOf(
@@ -216,7 +301,72 @@ class ClientTest extends TestCase
         );
     }
 
-    public function testSendResponseWithAccept()
+    public function testSendEastResponse()
+    {
+        $response = $this->createMock(EastResponse::class);
+
+        $this->getRequestEventMock()
+            ->expects(self::any())
+            ->method('setResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof Response;
+            }))
+            ->willReturnSelf();
+
+        $this->getHttpFoundationFactoryMock()
+            ->expects(self::any())
+            ->method('createResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof ResponseInterface;
+            }))
+            ->willReturn($this->createMock(Response::class));
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->sendResponse($response)
+        );
+    }
+
+    public function testSendJsonResponse()
+    {
+        $response = new class implements EastResponse, \JsonSerializable
+        {
+            public function __toString(): string
+            {
+                return 'foo';
+            }
+
+            public function jsonSerialize()
+            {
+                return ['foo' => 'bar'];
+            }
+        };
+
+        $this->getRequestEventMock()
+            ->expects(self::any())
+            ->method('setResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof Response;
+            }))
+            ->willReturnSelf();
+
+        $this->getHttpFoundationFactoryMock()
+            ->expects(self::any())
+            ->method('createResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof ResponseInterface;
+            }))
+            ->willReturn($this->createMock(Response::class));
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->sendResponse($response)
+        );
+    }
+
+    public function testSendPSRResponseWithAccept()
     {
         /**
          * @var ResponseInterface
@@ -237,7 +387,72 @@ class ClientTest extends TestCase
             ->with($this->callback(function ($response) {
                 return $response instanceof ResponseInterface;
             }))
-            ->willReturn($this->createMock(Response::class, [], [], '', false));
+            ->willReturn($this->createMock(Response::class));
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->acceptResponse($response)->sendResponse()
+        );
+    }
+
+    public function testSendEastResponseWithAccept()
+    {
+        $response = $this->createMock(EastResponse::class);
+
+        $this->getRequestEventMock()
+            ->expects(self::any())
+            ->method('setResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof Response;
+            }))
+            ->willReturnSelf();
+
+        $this->getHttpFoundationFactoryMock()
+            ->expects(self::any())
+            ->method('createResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof ResponseInterface;
+            }))
+            ->willReturn($this->createMock(Response::class));
+
+        $client = $this->buildClient();
+        self::assertInstanceOf(
+            $this->getClientClass(),
+            $client->acceptResponse($response)->sendResponse()
+        );
+    }
+
+    public function testSendJsonResponseWithAccept()
+    {
+        $response = new class implements EastResponse, \JsonSerializable
+        {
+            public function __toString(): string
+            {
+                return 'foo';
+            }
+
+            public function jsonSerialize()
+            {
+                return ['foo' => 'bar'];
+            }
+        };
+
+        $this->getRequestEventMock()
+            ->expects(self::any())
+            ->method('setResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof Response;
+            }))
+            ->willReturnSelf();
+
+        $this->getHttpFoundationFactoryMock()
+            ->expects(self::any())
+            ->method('createResponse')
+            ->with($this->callback(function ($response) {
+                return $response instanceof ResponseInterface;
+            }))
+            ->willReturn($this->createMock(Response::class));
 
         $client = $this->buildClient();
         self::assertInstanceOf(
@@ -298,7 +513,7 @@ class ClientTest extends TestCase
             ->with($this->callback(function ($response) {
                 return $response instanceof ResponseInterface;
             }))
-            ->willReturn($this->createMock(Response::class, [], [], '', false));
+            ->willReturn($this->createMock(Response::class));
 
         $client = $this->buildClient();
         self::assertInstanceOf(
@@ -328,7 +543,7 @@ class ClientTest extends TestCase
             ->with($this->callback(function ($response) {
                 return $response instanceof ResponseInterface;
             }))
-            ->willReturn($this->createMock(Response::class, [], [], '', false));
+            ->willReturn($this->createMock(Response::class));
 
         $client = $this->buildClient();
         self::assertInstanceOf(
@@ -358,7 +573,7 @@ class ClientTest extends TestCase
             ->with($this->callback(function ($response) {
                 return $response instanceof ResponseInterface;
             }))
-            ->willReturn($this->createMock(Response::class, [], [], '', false));
+            ->willReturn($this->createMock(Response::class));
 
         $client = $this->buildClient();
         self::assertInstanceOf(

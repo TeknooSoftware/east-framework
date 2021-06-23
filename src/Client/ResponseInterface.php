@@ -25,8 +25,6 @@ declare(strict_types=1);
 
 namespace Teknoo\East\Foundation\Client;
 
-use JsonSerializable;
-
 /**
  * @copyright   Copyright (c) 2009-2021 EIRL Richard Déloge (richarddeloge@gmail.com)
  * @copyright   Copyright (c) 2020-2021 SASU Teknoo Software (https://teknoo.software)
@@ -36,6 +34,7 @@ use JsonSerializable;
  * @license     http://teknoo.software/license/mit         MIT License
  * @author      Richard Déloge <richarddeloge@gmail.com>
  */
-interface ResponseInterface extends JsonSerializable
+interface ResponseInterface
 {
+    public function __toString(): string;
 }
